@@ -34,11 +34,7 @@ def ler_vetor(nome, colunas):
 
 
 def verificar_seguro(alocacao, necessidade, disponivel, n, r):
-    """
-    Algoritmo de Verificação de Estado Seguro.
-    Retorna (True, sequencia) se seguro, (False, []) caso contrário.
-    """
-    trabalho = disponivel[:]
+    trabalho  = disponivel[:]
     concluido = [False] * n
     sequencia = []
 
@@ -46,7 +42,6 @@ def verificar_seguro(alocacao, necessidade, disponivel, n, r):
         encontrou = False
         for i in range(n):
             if not concluido[i] and all(necessidade[i][j] <= trabalho[j] for j in range(r)):
-                # Processo i pode ser atendido
                 for j in range(r):
                     trabalho[j] += alocacao[i][j]
                 concluido[i] = True
@@ -65,15 +60,13 @@ def imprimir_estado(alocacao, necessidade, disponivel, maximo, n, r):
     print("\n" + "="*55)
     print("  ESTADO ATUAL DA MEMÓRIA")
     print("="*55)
-
-    print(f"\n  {'Processo':<10} {'Alocação':<{r*3+2}} {'Máximo':<{r*3+2}} {'Necessidade':<{r*3+2}}")
+    print(f"\n  {'Processo':<10} {'Alocação':<{r*3+2}} {'Máximo':<{r*3+2}} {'Necessidade'}")
     print("  " + "-"*50)
     for i in range(n):
-        al  = " ".join(f"{alocacao[i][j]:>2}" for j in range(r))
-        mx  = " ".join(f"{maximo[i][j]:>2}"    for j in range(r))
-        ne  = " ".join(f"{necessidade[i][j]:>2}" for j in range(r))
+        al = " ".join(f"{alocacao[i][j]:>2}"    for j in range(r))
+        mx = " ".join(f"{maximo[i][j]:>2}"       for j in range(r))
+        ne = " ".join(f"{necessidade[i][j]:>2}"  for j in range(r))
         print(f"  P{i:<9} [{al}]   [{mx}]   [{ne}]")
-
     disp = " ".join(f"{disponivel[j]:>2}" for j in range(r))
     print(f"\n  Disponível: [{disp}]")
     print("="*55)
@@ -96,34 +89,28 @@ def main():
         except ValueError:
             print("  [!] Apenas inteiros.")
 
-    maximo    = ler_matriz("Matriz de Máximo", n, r)
-    alocacao  = ler_matriz("Matriz de Alocação atual", n, r)
+    maximo   = ler_matriz("Matriz de Máximo", n, r)
+    alocacao = ler_matriz("Matriz de Alocação atual", n, r)
 
-    # Valida: alocacao <= maximo
     for i in range(n):
         for j in range(r):
             if alocacao[i][j] > maximo[i][j]:
                 print(f"\n  [!] ERRO: Alocação de P{i} excede o máximo declarado.")
-                print("  Encerrando.")
                 return
 
-    # Necessidade = Máximo - Alocação
     necessidade = [[maximo[i][j] - alocacao[i][j] for j in range(r)] for i in range(n)]
+    disponivel  = ler_vetor("Vetor de Recursos Disponíveis", r)
 
-    disponivel = ler_vetor("Vetor de Recursos Disponíveis", r)
-
-    # Verifica estado inicial
+    # --- Estado inicial ---
     print("\n[2] VERIFICAÇÃO DO ESTADO INICIAL")
     imprimir_estado(alocacao, necessidade, disponivel, maximo, n, r)
 
     seguro, seq = verificar_seguro(alocacao, necessidade, disponivel, n, r)
     if seguro:
-        seq_str = " → ".join(f"P{p}" for p in seq)
         print(f"\n  Estado inicial: SEGURO")
-        print(f"  Sequência segura: {seq_str}")
+        print(f"  Sequência segura: {' → '.join(f'P{p}' for p in seq)}")
     else:
         print("\n  Estado inicial: INSEGURO — sistema já em deadlock potencial.")
-        print("  Encerrando simulação.")
         return
 
     # --- Loop de requisições ---
@@ -145,7 +132,6 @@ def main():
             continue
 
         req = ler_vetor(f"Requisição de P{pid}", r)
-
         print(f"\n  >> P{pid} solicita: [{' '.join(str(x) for x in req)}]")
 
         # Passo 1: req <= necessidade[pid]
@@ -154,19 +140,34 @@ def main():
             continue
 
         # Passo 2: req <= disponivel
-        if any(req[j] > disponivel[j] for r_idx in range(r) for j in range(r)):
-            # Wait, let's look closely:
-            # any(req[j] > disponivel[j] for r_idx in range(r) for j in range(r))?
-            # No, in my code draft I wrote:
-            # any(req[j] > disponivel[j] for j in range(r))
-            # Let's ensure it's written exactly as before.
-            pass
-        # Yes, any(req[j] > disponivel[j] for j in range(r)) is correct.
+        if any(req[j] > disponivel[j] for j in range(r)):
+            print("  NEGADO: Recursos insuficientes — processo deve aguardar.")
+            continue
 
-        # Let's make sure the indentation and logic is clean.
-        # Let's double check the exact condition on line 158 of original code:
-        # 158:         if any(req[j] > disponivel[j] for j in range(r)):
-        # Yes. Let's make sure it is exactly correct.
+        # Passo 3: concessão provisória
+        for j in range(r):
+            disponivel[j]       -= req[j]
+            alocacao[pid][j]    += req[j]
+            necessidade[pid][j] -= req[j]
 
-        # Let's review the code we're about to write.
-        # Yes, it looks 100% correct.
+        # Passo 4: verifica segurança
+        seguro, seq = verificar_seguro(alocacao, necessidade, disponivel, n, r)
+        if seguro:
+            print(f"  CONCEDIDO — Estado permanece SEGURO.")
+            print(f"  Sequência segura: {' → '.join(f'P{p}' for p in seq)}")
+            imprimir_estado(alocacao, necessidade, disponivel, maximo, n, r)
+        else:
+            # Reverte
+            for j in range(r):
+                disponivel[j]       += req[j]
+                alocacao[pid][j]    -= req[j]
+                necessidade[pid][j] += req[j]
+            print("  NEGADO — Concessão levaria a estado INSEGURO (risco de deadlock).")
+
+    print("\n" + "="*55)
+    print("  Simulação encerrada.")
+    print("="*55 + "\n")
+
+
+if __name__ == "__main__":
+    main()
