@@ -1,5 +1,5 @@
 # Simuladores Didáticos de Sistemas Operacionais
-Trabalho em Grupo 2 · Sistemas Operacionais · UFOPA
+Trabalho · Sistemas Operacionais · UFOPA
 
 ## Simuladores
 
