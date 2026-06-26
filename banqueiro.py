@@ -77,7 +77,7 @@ def main():
     print("   SIMULADOR — ALGORITMO DO BANQUEIRO")
     print("="*55)
 
-    # --- Configuração inicial ---
+    # Configuração
     print("\n[1] CONFIGURAÇÃO DO SISTEMA")
     while True:
         try:
@@ -101,7 +101,7 @@ def main():
     necessidade = [[maximo[i][j] - alocacao[i][j] for j in range(r)] for i in range(n)]
     disponivel  = ler_vetor("Vetor de Recursos Disponíveis", r)
 
-    # --- Estado inicial ---
+    # Estado inicial
     print("\n[2] VERIFICAÇÃO DO ESTADO INICIAL")
     imprimir_estado(alocacao, necessidade, disponivel, maximo, n, r)
 
@@ -113,7 +113,7 @@ def main():
         print("\n  Estado inicial: INSEGURO — sistema já em deadlock potencial.")
         return
 
-    # --- Loop de requisições ---
+    #  Loop de requisições 
     print("\n[3] SIMULAÇÃO DE REQUISIÇÕES")
     print("  (digite 'sair' para encerrar)\n")
 
